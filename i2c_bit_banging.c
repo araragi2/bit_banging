@@ -27,54 +27,67 @@ void i2c_start_cond(void)
   if (started) { 
     // if started, do a restart condition
     // set SDA to 1
+    printf("start condition: started = false\n");
     set_SDA();
+    printf("fucntions: set sda");
     I2C_delay();
+    printf("fucntions: delay");
     set_SCL();
+    printf("fucntions: set scl");
     
 
     // Repeated start setup time, minimum 4.7us
     I2C_delay();
+    printf("fucntions: delay");
   }
 
  
-
+ printf("start condition: started = true\n");
   // SCL is high, set SDA from 1 to 0.
   clear_SDA();
+  printf("fucntions: clear sda\n");
   I2C_delay();
+  printf("fucntions: delay\n");
   clear_SCL();
+  printf("fucntions: clear scl\n");
   started = true;
+  printf("started: false -->true\n");
 }
 
 void i2c_stop_cond(void)
 {
   // set SDA to 0
   clear_SDA();
+  printf("fucntions: clear sda\n");
   I2C_delay();
-
+  printf("fucntions: delay\n");
   set_SCL();
+  printf("fucntions: set clock\n");
   // Clock stretching
   
 
   // Stop bit setup time, minimum 4us
   I2C_delay();
+  printf("fucntions: delay\n");
 
   // SCL is high, set SDA from 0 to 1
   set_SDA();
+  printf("fucntions: set sda\n");
   I2C_delay();
-
-  
-
+  printf("fucntions: delay\n");
   started = false;
+  printf("stop condition: started == false\n");
 }
 
 
 
 
 // Write a byte to I2C bus. Return 0 if ack by the target.
-int* i2c_write_byte(bool start, bool stop,unsigned char byte) {
-  if (start){
+int* i2c_write_byte(int *start, int *stop,unsigned char byte) {
+  if (*start){
     i2c_start_cond();
   }
+  printf("start write: SDA: %d,SCl: %d, global started: %d\n",SDA, SCL, started);
   static int arr[7];
   int i;
   for (i = 0; i < 8; i++) {
@@ -84,13 +97,14 @@ int* i2c_write_byte(bool start, bool stop,unsigned char byte) {
     else arr[i]=0;
     byte <<= 1;
   }
-  if(stop){
+  if(*stop){
     i2c_stop_cond();
   }
+   printf("stop write: SDA: %d,SCl: %d, global started: %d",SDA, SCL, started);
   return arr;
 }
 void i2c_read_and_print( int* data){
-   printf(" data: %d%d%d%d%d%d%d%d \n", data[0], data[1], data[2], data[3],data[4], data[5], data[6], data[7]);
+   printf("\n data: %d%d%d%d%d%d%d%d \n ------------------------\n", data[0], data[1], data[2], data[3],data[4], data[5], data[6], data[7]);
 }
 
 
@@ -109,21 +123,23 @@ void I2C_delay(void)
 int main()
 {
     unsigned char data = 0x80;
-    bool start,stop;
-    start = true ; stop = true;
+    int start_state, stop_state;
+    int *start, *stop;
+    start = &start_state; stop = &stop_state;
+    printf("start = true; stop = true\n");
+     *start = 1 ; *stop = 1;
     i2c_read_and_print( i2c_write_byte(start, stop, data));
-    printf("SDA: %d, SCL: %d line0\n",SDA,SCL);
     data = 0x31;
-    start = true ; stop = false;
+     printf("start = true; stop = false\n");
+    *start = 1 ; *stop = 0;
     i2c_read_and_print( i2c_write_byte(start, stop, data));
-    printf("SDA: %d, SCL: %d line1\n",SDA,SCL);
     data = 0x11;
-    start = false ; stop = true;
+     printf("start = false; stop = true\n");
+    *start = 0 ; *stop = 1;
     i2c_read_and_print( i2c_write_byte(start, stop, data));
-    printf("SDA: %d, SCL: %d line2\n",SDA,SCL);
     data = 0x15;
-    start = false ; stop = false;
+     printf("start = false; stop = false\n");
+    start = 0 ; stop = 0;
     i2c_read_and_print( i2c_write_byte(start, stop, data));
-    printf("SDA: %d, SCL: %d line3\n",SDA,SCL);
 }
 //update 1/7/2023
